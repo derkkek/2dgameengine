@@ -20,7 +20,7 @@ private:
 	bool isRunning;
 	int windowWidth;
 	int windowHeight;
-	const int FPS = 60;
+	const int FPS = 500;
 	const int millisecondsPerFrame = 1000 / FPS;
 	int millisecondsPreviousFrame;
 };

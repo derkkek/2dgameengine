@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sdl/sdl_image.h>
 #include <glm/glm.hpp>
+#define FMT_UNICODE 0
+#include <spdlog/spdlog.h>
 
 Game::Game()
 {
@@ -16,7 +18,7 @@ void Game::Initialize()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
-		std::cerr << "Error initilaizing sdl" << "\n";
+		spdlog::critical("Error initilaizing sdl");
 		return;
 	}
 	SDL_DisplayMode displayMode;
@@ -27,17 +29,19 @@ void Game::Initialize()
 	window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_BORDERLESS);
 	if (!window)
 	{
-		std::cerr << "Error initializing window." << "\n";
+		spdlog::critical("Error initializing window.");
 		return;
 	}
 	
 	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (!renderer)
 	{
-		std::cerr << "Error initializing renderer." << "\n";
+		spdlog::critical("Error initializing renderer.");
 	}
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 	isRunning = true;
+	spdlog::info("game is initialized");
+	spdlog::critical("this is a critical error", 42);
 }
 glm::vec2 playerPos;
 glm::vec2 playerVel;
@@ -45,7 +49,7 @@ SDL_Rect player;
 void Game::Setup()
 {
 	playerPos = glm::vec2(10, 10);
-	playerVel = glm::vec2(0.5, 0);
+	playerVel = glm::vec2(10.0, 0);
 	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
 }
 
@@ -84,13 +88,10 @@ void Game::ProcessInput()
 
 void Game::Update()
 {
-	int timeToWait = millisecondsPerFrame - (SDL_GetTicks() - millisecondsPreviousFrame);
-	if (timeToWait > 0 && timeToWait <= millisecondsPerFrame) {
-		SDL_Delay(timeToWait);
-	}
+	double deltaTime = (SDL_GetTicks() - millisecondsPreviousFrame) / 1000.0f;
 
 	millisecondsPreviousFrame = SDL_GetTicks();
-	playerPos += playerVel;
+	playerPos.x += playerVel.x * deltaTime;
 	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
 }
 
