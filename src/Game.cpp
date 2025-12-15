@@ -1,5 +1,7 @@
 #include "Game.h"
 #include <iostream>
+#include <sdl/sdl_image.h>
+#include <glm/glm.hpp>
 
 Game::Game()
 {
@@ -34,18 +36,23 @@ void Game::Initialize()
 	{
 		std::cerr << "Error initializing renderer." << "\n";
 	}
-	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 	isRunning = true;
 }
-
+glm::vec2 playerPos;
+glm::vec2 playerVel;
+SDL_Rect player;
 void Game::Setup()
 {
-
+	playerPos = glm::vec2(10, 10);
+	playerVel = glm::vec2(0.5, 0);
+	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
 }
 
 void Game::Run()
 {
 	Initialize();
+	Setup();
 	while (isRunning)
 	{
 		ProcessInput();
@@ -77,19 +84,36 @@ void Game::ProcessInput()
 
 void Game::Update()
 {
+	int timeToWait = millisecondsPerFrame - (SDL_GetTicks() - millisecondsPreviousFrame);
+	if (timeToWait > 0 && timeToWait <= millisecondsPerFrame) {
+		SDL_Delay(timeToWait);
+	}
+
+	millisecondsPreviousFrame = SDL_GetTicks();
+	playerPos += playerVel;
+	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
 }
+
 
 void Game::Render()
 {
 	SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
 	SDL_RenderClear(renderer);
 
-	SDL_Rect player = {10, 10, 20,20};
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderFillRect(renderer, &player);
+
+
+	// Use forward slashes or raw string literal to avoid escape sequence issues
+	SDL_Surface* surface = IMG_Load("assets/images/tank-tiger-right.png");
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+	SDL_FreeSurface(surface);
+	SDL_RenderCopy(renderer, texture, NULL, &player);
 
 	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(texture);
 }
+
 
 void Game::Destroy()
 {
