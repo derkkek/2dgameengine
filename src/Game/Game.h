@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 #include <sdl/SDL.h>
+#include "../ECS/ECS.h"
 class Game
 {
 public:
