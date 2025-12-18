@@ -4,9 +4,13 @@
 #include <glm/glm.hpp>
 #define FMT_UNICODE 0
 #include <spdlog/spdlog.h>
+#include "../Components/TransformComponent.h"
+#include "../Components/RigidbodyComponent.h"
+#include "../Systems/MovementSystem.h"
 
 Game::Game()
 {
+	registry = std::make_unique<Registry>();
 	isRunning = false;
 }
 
@@ -46,11 +50,14 @@ void Game::Initialize()
 glm::vec2 playerPos;
 glm::vec2 playerVel;
 SDL_Rect player;
+
 void Game::Setup()
 {
-	playerPos = glm::vec2(10, 10);
-	playerVel = glm::vec2(10.0, 0);
-	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
+	registry->AddSystem<MovementSystem>();
+	Entity tank = registry->CreateEntity();
+
+	tank.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
+	tank.AddComponent<RigidbodyComponent>(glm::vec2(1.0f, 0.0f));
 }
 
 void Game::Run()
@@ -91,8 +98,11 @@ void Game::Update()
 	double deltaTime = (SDL_GetTicks() - millisecondsPreviousFrame) / 1000.0f;
 
 	millisecondsPreviousFrame = SDL_GetTicks();
-	playerPos.x += playerVel.x * deltaTime;
-	player = { (int)playerPos.x, (int)playerPos.y, 20,20 };
+	
+	registry->GetSystem<MovementSystem>().Update(deltaTime);
+
+	//update the registry to process the entitites to be deleted or created.
+	registry->Update();
 }
 
 
