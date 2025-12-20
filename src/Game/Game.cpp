@@ -7,10 +7,13 @@
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidbodyComponent.h"
 #include "../Systems/MovementSystem.h"
+#include "../Systems/RenderSystem.h"
+#include "../Components/SpriteComponent.h"
 
 Game::Game()
 {
 	registry = std::make_unique<Registry>();
+	assetStore = std::make_unique<AssetStore>();
 	isRunning = false;
 }
 
@@ -54,10 +57,21 @@ SDL_Rect player;
 void Game::Setup()
 {
 	registry->AddSystem<MovementSystem>();
+	registry->AddSystem<RenderSystem>();
+
+	assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-tiger-right.png");
+	assetStore->AddTexture(renderer, "truck-image", "./assets/images/truck-ford-down.png");
 	Entity tank = registry->CreateEntity();
 
+	tank.AddComponent<SpriteComponent>("tank-image", 32, 32);
 	tank.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
 	tank.AddComponent<RigidbodyComponent>(glm::vec2(1.0f, 0.0f));
+
+	Entity truck = registry->CreateEntity();
+
+	truck.AddComponent<SpriteComponent>("truck-image", 32, 32);
+	truck.AddComponent<TransformComponent>(glm::vec2(5.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
+	truck.AddComponent<RigidbodyComponent>(glm::vec2(0.0f, 5.0f));
 }
 
 void Game::Run()
@@ -112,17 +126,10 @@ void Game::Render()
 	SDL_RenderClear(renderer);
 
 
-
-	// Use forward slashes or raw string literal to avoid escape sequence issues
-	SDL_Surface* surface = IMG_Load("assets/images/tank-tiger-right.png");
-
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	SDL_FreeSurface(surface);
-	SDL_RenderCopy(renderer, texture, NULL, &player);
+	registry->GetSystem<RenderSystem>().Update(renderer, assetStore);
 
 	SDL_RenderPresent(renderer);
-	SDL_DestroyTexture(texture);
+
 }
 
 
