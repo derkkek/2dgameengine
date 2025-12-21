@@ -24,7 +24,7 @@ public:
 
 			transform.position.x += rigidbody.velocity.x * deltaTime;
 			transform.position.y += rigidbody.velocity.y * deltaTime;
-			spdlog::info("position entity x: " + std::to_string(transform.position.x));
+			//spdlog::info("position entity x: " + std::to_string(transform.position.x));
 		}
 	}
 private:

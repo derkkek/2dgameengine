@@ -17,6 +17,7 @@ public:
 	void Render();
 	void Destroy();
 	void Setup();
+	void LoadLevel(int level);
 
 private:
 	SDL_Window* window;
