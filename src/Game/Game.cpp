@@ -12,6 +12,8 @@
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../Components/SpriteComponent.h"
+#include "../Components/AnimationComponent.h"
+#include "../Systems/AnimationSystem.h"
 
 Game::Game()
 {
@@ -61,11 +63,14 @@ void Game::LoadLevel(int level) {
 	// Add the sytems that need to be processed in our game
 	registry->AddSystem<MovementSystem>();
 	registry->AddSystem<RenderSystem>();
+	registry->AddSystem<AnimationSystem>();
 
 	// Adding assets to the asset store
 	assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
 	assetStore->AddTexture(renderer, "truck-image", "./assets/images/truck-ford-right.png");
 	assetStore->AddTexture(renderer, "tilemap-image", "./assets/tilemaps/jungle.png");
+	assetStore->AddTexture(renderer, "chopper-image", "./assets/images/chopper.png");
+	assetStore->AddTexture(renderer, "radar-image", "./assets/images/radar.png");
 
 	// Load the tilemap
 	int tileSize = 32;
@@ -102,6 +107,17 @@ void Game::LoadLevel(int level) {
 	truck.AddComponent<TransformComponent>(glm::vec2(50.0, 100.0), glm::vec2(1.0, 1.0), 0.0);
 	truck.AddComponent<RigidbodyComponent>(glm::vec2(20.0, 0.0));
 	truck.AddComponent<SpriteComponent>("truck-image", 32, 32, 1);
+
+	Entity chopper = registry->CreateEntity();
+	chopper.AddComponent<TransformComponent>(glm::vec2(100.0, 100.0), glm::vec2(1.0, 1.0), 0.0);
+	chopper.AddComponent<RigidbodyComponent>(glm::vec2(0.0, 0.0));
+	chopper.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
+	chopper.AddComponent<AnimationComponent>(2, 10,true);
+
+	Entity radar = registry->CreateEntity();
+	radar.AddComponent<TransformComponent>(glm::vec2(windowWidth - 74, 10.0), glm::vec2(1.0, 1.0), 0.0);
+	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 2);
+	radar.AddComponent<AnimationComponent>(8, 5, true);
 }
 
 
@@ -148,6 +164,7 @@ void Game::Update()
 	millisecondsPreviousFrame = SDL_GetTicks();
 	
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
+	registry->GetSystem<AnimationSystem>().Update();
 
 	//update the registry to process the entitites to be deleted or created.
 	registry->Update();
