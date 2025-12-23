@@ -30,6 +30,7 @@ private:
 	const int FPS = 500;
 	const int millisecondsPerFrame = 1000 / FPS;
 	int millisecondsPreviousFrame;
+	bool debug;
 };
 
 #endif

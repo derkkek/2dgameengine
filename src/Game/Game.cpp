@@ -14,12 +14,15 @@
 #include "../Components/SpriteComponent.h"
 #include "../Components/AnimationComponent.h"
 #include "../Systems/AnimationSystem.h"
-
+#include "../Components/BoxColliderComponent.h"
+#include "../Systems/CollisionSystem.h"
+#include "../Systems/RenderDebugSystem.h"
 Game::Game()
 {
 	registry = std::make_unique<Registry>();
 	assetStore = std::make_unique<AssetStore>();
 	isRunning = false;
+	debug = false;
 }
 
 Game::~Game()
@@ -64,6 +67,8 @@ void Game::LoadLevel(int level) {
 	registry->AddSystem<MovementSystem>();
 	registry->AddSystem<RenderSystem>();
 	registry->AddSystem<AnimationSystem>();
+	registry->AddSystem<CollisionSystem>();
+	registry->AddSystem<RenderDebugSystem>();
 
 	// Adding assets to the asset store
 	assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
@@ -99,14 +104,16 @@ void Game::LoadLevel(int level) {
 
 	// Create an entity
 	Entity tank = registry->CreateEntity();
-	tank.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
-	tank.AddComponent<RigidbodyComponent>(glm::vec2(40.0, 0.0));
+	tank.AddComponent<TransformComponent>(glm::vec2(500.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
+	tank.AddComponent<RigidbodyComponent>(glm::vec2(-30.0, 0.0));
 	tank.AddComponent<SpriteComponent>("tank-image", 32, 32, 2);
+	tank.AddComponent<BoxColliderComponent>(32, 32);
 
 	Entity truck = registry->CreateEntity();
-	truck.AddComponent<TransformComponent>(glm::vec2(50.0, 100.0), glm::vec2(1.0, 1.0), 0.0);
+	truck.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
 	truck.AddComponent<RigidbodyComponent>(glm::vec2(20.0, 0.0));
 	truck.AddComponent<SpriteComponent>("truck-image", 32, 32, 1);
+	truck.AddComponent<BoxColliderComponent>(32, 32);
 
 	Entity chopper = registry->CreateEntity();
 	chopper.AddComponent<TransformComponent>(glm::vec2(100.0, 100.0), glm::vec2(1.0, 1.0), 0.0);
@@ -151,6 +158,10 @@ void Game::ProcessInput()
 			{
 				isRunning = false;
 			}
+			else if (sdlEvent.key.keysym.sym == SDLK_d)
+			{
+				debug = !debug;
+			}
 		default:
 			break;
 		}
@@ -165,6 +176,7 @@ void Game::Update()
 	
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
 	registry->GetSystem<AnimationSystem>().Update();
+	registry->GetSystem<CollisionSystem>().Update();
 
 	//update the registry to process the entitites to be deleted or created.
 	registry->Update();
@@ -178,6 +190,10 @@ void Game::Render()
 
 
 	registry->GetSystem<RenderSystem>().Update(renderer, assetStore);
+	if (debug)
+	{
+		registry->GetSystem<RenderDebugSystem>().Update(renderer);
+	}
 
 	SDL_RenderPresent(renderer);
 
