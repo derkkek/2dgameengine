@@ -7,6 +7,7 @@
 #include <set>
 #define FMT_UNICODE 0
 #include <spdlog/spdlog.h>
+#include <deque>
 const unsigned int MAX_COMPONENTS = 32;
 
 typedef std::bitset<MAX_COMPONENTS> Signature;
@@ -30,6 +31,8 @@ public:
 
 	template<typename T>
 	T& GetComponent();
+
+	void Kill();
 
 	//forward declaration
 	class Registry* registry;
@@ -179,6 +182,10 @@ public:
 	T& GetSystem();
 
 	void AddEntityToSystems(Entity entity);
+
+	void RemoveEntityFromSystems(Entity entity);
+
+	void KillEntity(Entity entity);
 private:
 	int numEntitites = 0;
 	/*
@@ -200,6 +207,8 @@ private:
 	std::set<Entity> entitiesToBeAdded;
 	std::set<Entity> entitiesToBeDeleted;
 
+	/*free ids from previously deleted entitites.*/
+	std::deque<int> freeIDs;
 
 };
 
