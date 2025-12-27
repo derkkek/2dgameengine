@@ -2,6 +2,8 @@
 #include "../Components/BoxColliderComponent.h"
 #include "../ECS/ECS.h"
 #include "../Components/TransformComponent.h"
+#include "../Events/CollisionEvent.h"
+
 class CollisionSystem : public System
 {
 public:
@@ -14,7 +16,7 @@ public:
 	~CollisionSystem() = default;
 
 
-	void Update() 
+	void Update(std::unique_ptr<EventBus>& eventBus) 
 	{
 		auto entities = GetSystemEntities();
 		for (auto i = entities.begin(); i != entities.end(); i++)
@@ -34,6 +36,7 @@ public:
 
 				if (collisionHappened)
 				{
+					eventBus->EmitEvent<CollisionEvent>(a, b);
 					aCollider.isCollided = true;
 					bCollider.isCollided = true;
 				}

@@ -4,6 +4,7 @@
 #include "../ECS/ECS.h"
 #include <memory>
 #include "../AssetStore/AssetStore.h"
+#include "../EventBus/EventBus.h"
 
 class Game
 {
@@ -24,6 +25,7 @@ private:
 	SDL_Renderer* renderer;
 	std::unique_ptr<Registry> registry;
 	std::unique_ptr<AssetStore> assetStore;
+	std::unique_ptr<EventBus> eventBus;
 	bool isRunning;
 	int windowWidth;
 	int windowHeight;

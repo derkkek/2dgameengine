@@ -17,10 +17,12 @@
 #include "../Components/BoxColliderComponent.h"
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/RenderDebugSystem.h"
+#include "../Systems/DamageSystem.h"
 Game::Game()
 {
 	registry = std::make_unique<Registry>();
 	assetStore = std::make_unique<AssetStore>();
+	eventBus = std::make_unique<EventBus>();
 	isRunning = false;
 	debug = false;
 }
@@ -69,6 +71,7 @@ void Game::LoadLevel(int level) {
 	registry->AddSystem<AnimationSystem>();
 	registry->AddSystem<CollisionSystem>();
 	registry->AddSystem<RenderDebugSystem>();
+	registry->AddSystem<DamageSystem>();
 
 	// Adding assets to the asset store
 	assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
@@ -175,10 +178,14 @@ void Game::Update()
 	double deltaTime = (SDL_GetTicks() - millisecondsPreviousFrame) / 1000.0f;
 
 	millisecondsPreviousFrame = SDL_GetTicks();
+
+	eventBus->Reset();
+
+	registry->GetSystem<DamageSystem>().SubscribeToEvents(eventBus);
 	
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
 	registry->GetSystem<AnimationSystem>().Update();
-	registry->GetSystem<CollisionSystem>().Update();
+	registry->GetSystem<CollisionSystem>().Update(eventBus);
 
 	//update the registry to process the entitites to be deleted or created.
 	registry->Update();
