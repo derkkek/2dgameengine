@@ -9,10 +9,11 @@ struct SpriteComponent
 	int width;
 	int height;
 	int zIndex;
+	bool isFixed;
 	SDL_Rect sourceRect;
 
-	SpriteComponent(std::string ID = "", int width = 5, int height = 5, int z_index = 0,int srcRectX = 0, int srcRectY = 0)
-		:assetTextureID(ID), width(width), height(height), zIndex(z_index), sourceRect({srcRectX, srcRectY, width, height})
+	SpriteComponent(std::string ID = "", int width = 5, int height = 5, int z_index = 0,bool fixed = false, int srcRectX = 0, int srcRectY = 0)
+		:assetTextureID(ID), width(width), height(height), zIndex(z_index), isFixed(fixed), sourceRect({srcRectX, srcRectY, width, height})
 	{
 
 	}

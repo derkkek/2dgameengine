@@ -18,6 +18,18 @@
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/RenderDebugSystem.h"
 #include "../Systems/DamageSystem.h"
+#include "../Systems/KeyboardControlSystem.h"
+#include "../Components/KeyboardControlledComponent.h"
+#include "../Systems/CameraMovementSystem.h"
+#include "../Systems/ProjectileEmitSystem.h"
+#include "../Components/HealthComponent.h"
+
+int Game::windowWidth;
+int Game::windowHeight;
+int Game::mapWidth;
+int Game::mapHeight;
+std::unique_ptr<Registry> Game::registry;
+
 Game::Game()
 {
 	registry = std::make_unique<Registry>();
@@ -57,6 +69,11 @@ void Game::Initialize()
 	}
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 	isRunning = true;
+
+	camera.x = 0;
+	camera.y = 0;
+	camera.w = windowWidth;
+	camera.h = windowHeight;
 	spdlog::info("game is initialized");
 }
 glm::vec2 playerPos;
@@ -72,13 +89,18 @@ void Game::LoadLevel(int level) {
 	registry->AddSystem<CollisionSystem>();
 	registry->AddSystem<RenderDebugSystem>();
 	registry->AddSystem<DamageSystem>();
+	registry->AddSystem<KeyboardControlSystem>();
+	registry->AddSystem<CameraMovementSystem>();
+	registry->AddSystem<ProjectileEmitSystem>();
+
 
 	// Adding assets to the asset store
 	assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
 	assetStore->AddTexture(renderer, "truck-image", "./assets/images/truck-ford-right.png");
 	assetStore->AddTexture(renderer, "tilemap-image", "./assets/tilemaps/jungle.png");
-	assetStore->AddTexture(renderer, "chopper-image", "./assets/images/chopper.png");
+	assetStore->AddTexture(renderer, "chopper-image", "./assets/images/chopper-spritesheet.png");
 	assetStore->AddTexture(renderer, "radar-image", "./assets/images/radar.png");
+	assetStore->AddTexture(renderer, "bullet-image", "./assets/images/bullet.png");
 
 	// Load the tilemap
 	int tileSize = 32;
@@ -100,10 +122,12 @@ void Game::LoadLevel(int level) {
 
 			Entity tile = registry->CreateEntity();
 			tile.AddComponent<TransformComponent>(glm::vec2(x * (tileScale * tileSize), y * (tileScale * tileSize)), glm::vec2(tileScale, tileScale), 0.0);
-			tile.AddComponent<SpriteComponent>("tilemap-image", tileSize, tileSize, 0, srcRectX, srcRectY);
+			tile.AddComponent<SpriteComponent>("tilemap-image", tileSize, tileSize, 0, false ,srcRectX, srcRectY);
 		}
 	}
 	mapFile.close();
+	mapWidth = mapNumCols * tileSize * tileScale;
+	mapHeight = mapNumRows * tileSize * tileScale;
 
 	// Create an entity
 	Entity tank = registry->CreateEntity();
@@ -111,25 +135,32 @@ void Game::LoadLevel(int level) {
 	tank.AddComponent<RigidbodyComponent>(glm::vec2(-30.0, 0.0));
 	tank.AddComponent<SpriteComponent>("tank-image", 32, 32, 2);
 	tank.AddComponent<BoxColliderComponent>(32, 32);
+	tank.AddComponent<HealthComponent>();
 
 	Entity truck = registry->CreateEntity();
 	truck.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0, 1.0), 0.0);
 	truck.AddComponent<RigidbodyComponent>(glm::vec2(20.0, 0.0));
 	truck.AddComponent<SpriteComponent>("truck-image", 32, 32, 1);
 	truck.AddComponent<BoxColliderComponent>(32, 32);
+	truck.AddComponent<HealthComponent>();
 
 	Entity chopper = registry->CreateEntity();
 	chopper.AddComponent<TransformComponent>(glm::vec2(100.0, 100.0), glm::vec2(1.0, 1.0), 0.0);
 	chopper.AddComponent<RigidbodyComponent>(glm::vec2(0.0, 0.0));
 	chopper.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
 	chopper.AddComponent<AnimationComponent>(2, 10,true);
+	chopper.AddComponent<KeyboardControlledComponent>(glm::vec2(0, -80), glm::vec2(80, 0), glm::vec2(0 ,80), glm::vec2(-80, 0));
+	chopper.AddComponent<CameraFollowComponent>();
+	chopper.AddComponent<HealthComponent>();
+	chopper.AddComponent<ProjectileEmitterComponent>(glm::vec2(150,150));
+	chopper.AddComponent<BoxColliderComponent>();
+	
 
 	Entity radar = registry->CreateEntity();
 	radar.AddComponent<TransformComponent>(glm::vec2(windowWidth - 74, 10.0), glm::vec2(1.0, 1.0), 0.0);
-	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 2);
+	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 2, true);
 	radar.AddComponent<AnimationComponent>(8, 5, true);
 
-	chopper.Kill();
 }
 
 
@@ -159,6 +190,8 @@ void Game::ProcessInput()
 		case SDL_QUIT:
 			isRunning = false;
 		case SDL_KEYDOWN:
+
+			eventBus->EmitEvent<KeyPressedEvent>(sdlEvent.key.keysym.sym);
 			if (sdlEvent.key.keysym.sym == SDLK_ESCAPE)
 			{
 				isRunning = false;
@@ -182,10 +215,15 @@ void Game::Update()
 	eventBus->Reset();
 
 	registry->GetSystem<DamageSystem>().SubscribeToEvents(eventBus);
+	registry->GetSystem<KeyboardControlSystem>().SubscribeToEvents(eventBus);
+	registry->GetSystem<CameraMovementSystem>().Update(camera);
 	
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
 	registry->GetSystem<AnimationSystem>().Update();
 	registry->GetSystem<CollisionSystem>().Update(eventBus);
+	registry->GetSystem<ProjectileEmitSystem>().Update(registry);
+	registry->GetSystem<ProjectileEmitSystem>().SubscribeToEvents(eventBus);
+
 
 	//update the registry to process the entitites to be deleted or created.
 	registry->Update();
@@ -198,10 +236,10 @@ void Game::Render()
 	SDL_RenderClear(renderer);
 
 
-	registry->GetSystem<RenderSystem>().Update(renderer, assetStore);
+	registry->GetSystem<RenderSystem>().Update(renderer, assetStore, camera);
 	if (debug)
 	{
-		registry->GetSystem<RenderDebugSystem>().Update(renderer);
+		registry->GetSystem<RenderDebugSystem>().Update(renderer, camera);
 	}
 
 	SDL_RenderPresent(renderer);

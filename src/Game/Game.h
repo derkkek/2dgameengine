@@ -20,15 +20,22 @@ public:
 	void Setup();
 	void LoadLevel(int level);
 
+	static int windowWidth;
+	static int windowHeight;
+	static int mapWidth;
+	static int mapHeight;
+
+	static std::unique_ptr<Registry> registry;
+
 private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
-	std::unique_ptr<Registry> registry;
+	SDL_Rect camera;
+	
 	std::unique_ptr<AssetStore> assetStore;
 	std::unique_ptr<EventBus> eventBus;
 	bool isRunning;
-	int windowWidth;
-	int windowHeight;
+
 	const int FPS = 500;
 	const int millisecondsPerFrame = 1000 / FPS;
 	int millisecondsPreviousFrame;

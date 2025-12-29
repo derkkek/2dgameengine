@@ -62,8 +62,10 @@ public:
     // Example: eventBus->SubscribeToEvent<CollisionEvent>(this, &Game::onCollision);
     /////////////////////////////////////////////////////////////////////// 
     template <typename TEvent, typename TOwner>
-    void SubscribeToEvent(TOwner* ownerInstance, void (TOwner::* callbackFunction)(TEvent&)) {
-        if (!subscribers[typeid(TEvent)].get()) {
+    void SubscribeToEvent(TOwner* ownerInstance, void (TOwner::* callbackFunction)(TEvent&)) 
+    {
+        if (!subscribers[typeid(TEvent)].get()) 
+        {
             subscribers[typeid(TEvent)] = std::make_unique<HandlerList>();
         }
         auto subscriber = std::make_unique<EventCallback<TOwner, TEvent>>(ownerInstance, callbackFunction);
@@ -77,10 +79,13 @@ public:
     // Example: eventBus->EmitEvent<CollisionEvent>(player, enemy);
     /////////////////////////////////////////////////////////////////////// 
     template <typename TEvent, typename ...TArgs>
-    void EmitEvent(TArgs&& ...args) {
+    void EmitEvent(TArgs&& ...args) 
+    {
         auto handlers = subscribers[typeid(TEvent)].get();
-        if (handlers) {
-            for (auto it = handlers->begin(); it != handlers->end(); it++) {
+        if (handlers) 
+        {
+            for (auto it = handlers->begin(); it != handlers->end(); it++) 
+            {
                 auto handler = it->get();
                 TEvent event(std::forward<TArgs>(args)...);
                 handler->Execute(event);

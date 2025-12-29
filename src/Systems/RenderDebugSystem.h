@@ -14,13 +14,13 @@ public:
 		RequireComponent<TransformComponent>();
 	}
 
-	void Update(SDL_Renderer* renderer)
+	void Update(SDL_Renderer* renderer, SDL_Rect& camera)
 	{
 		for (auto entity : GetSystemEntities())
 		{
 			BoxColliderComponent& collider = entity.GetComponent<BoxColliderComponent>();
 			TransformComponent transform = entity.GetComponent<TransformComponent>();
-			SDL_Rect boundingBox = { transform.position.x, transform.position.y, collider.width + collider.offset.x, collider.height + collider.offset.y };
+			SDL_Rect boundingBox = { transform.position.x - camera.x, transform.position.y - camera.y, collider.width * transform.scale.x + collider.offset.x , collider.height * transform.scale.y + collider.offset.y };
 			
 			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 			
