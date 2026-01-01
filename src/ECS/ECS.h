@@ -34,6 +34,14 @@ public:
 
 	void Kill();
 
+	void Tag(const std::string& tag);
+
+	bool HasTag(const std::string& tag);
+
+	void Group(const std::string& group);
+
+	bool BelongsToGroup(const std::string& group);
+
 	//forward declaration
 	class Registry* registry;
 private:
@@ -143,6 +151,8 @@ private:
 	Contigous block of memory of component data
 	*/
 	std::vector<T> data;
+
+
 };
 
 class Registry
@@ -186,6 +196,23 @@ public:
 	void RemoveEntityFromSystems(Entity entity);
 
 	void KillEntity(Entity entity);
+
+	void TagEntity(Entity entity, const std::string& tag);
+
+	bool EntityHasTag(Entity entity, const std::string& tag);
+
+	Entity GetEntityByTag(const std::string& tag);
+
+	void RemoveEntityTag(Entity entity);
+
+	void GroupEntity(Entity entity, const std::string& group);
+
+	bool EntityBelongsToGroup(Entity entity, const std::string& group);
+
+	std::vector<Entity> GetEntitiesByGroup(const std::string& group);
+
+	void RemoveEntityGroup(Entity entity);
+
 private:
 	int numEntitites = 0;
 	/*
@@ -206,6 +233,12 @@ private:
 	/*Sets of entitites to be added or deleted in the next registry update in order to don't mess the systems working status.*/
 	std::set<Entity> entitiesToBeAdded;
 	std::set<Entity> entitiesToBeDeleted;
+
+	std::unordered_map<std::string, Entity> entityPerTag;
+	std::unordered_map<int, std::string> tagPerEntity;
+
+	std::unordered_map<std::string, std::set<Entity>> entitiesPerGroup;
+	std::unordered_map<int, std::string> groupPerEntity;
 
 	/*free ids from previously deleted entitites.*/
 	std::deque<int> freeIDs;

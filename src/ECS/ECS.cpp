@@ -17,6 +17,26 @@ void Entity::Kill()
 	registry->KillEntity(*this);
 }
 
+void Entity::Tag(const std::string& tag)
+{
+	registry->TagEntity(*this, tag);
+}
+
+bool Entity::HasTag(const std::string& tag)
+{
+	return registry->EntityHasTag(*this,tag);
+}
+
+void Entity::Group(const std::string& group)
+{
+	registry->GroupEntity(*this, group);
+}
+
+bool Entity::BelongsToGroup(const std::string& group)
+{
+	return registry->EntityBelongsToGroup(*this, group);
+}
+
 void System::AddEntityToSystem(Entity entity)
 {
 	entities.push_back(entity);
@@ -113,4 +133,82 @@ void Registry::RemoveEntityFromSystems(Entity entity)
 void Registry::KillEntity(Entity entity)
 {
 	entitiesToBeDeleted.insert(entity);
+}
+
+void Registry::TagEntity(Entity entity, const std::string& tag)
+{
+	entityPerTag.emplace(tag, entity);
+	tagPerEntity.emplace(entity.GetID(), tag);
+}
+
+bool Registry::EntityHasTag(Entity entity, const std::string& tag)
+{
+	if (tagPerEntity.find(entity.GetID()) == tagPerEntity.end())
+	{
+		return false;
+	}
+	return entityPerTag.find(tag)->second.GetID() == entity.GetID();
+}
+
+Entity Registry::GetEntityByTag(const std::string& tag)
+{
+	if (entityPerTag.find(tag) == entityPerTag.end()) {
+		spdlog::warn("Trying to get entity by tag, but tag '" + tag + "' does not exist.");
+		// Return a default/invalid entity or handle appropriately
+		return Entity(0); // or throw a more descriptive exception
+	}
+	return entityPerTag.at(tag);
+}
+
+void Registry::RemoveEntityTag(Entity entity)
+{
+	auto taggedEntity = tagPerEntity.find(entity.GetID());
+	if (taggedEntity != tagPerEntity.end())
+	{
+		auto tag = taggedEntity->second;
+		entityPerTag.erase(tag);
+		tagPerEntity.erase(taggedEntity);
+	}
+}
+
+void Registry::GroupEntity(Entity entity, const std::string& group)
+{
+	entitiesPerGroup.emplace(group, std::set<Entity>());
+	entitiesPerGroup[group].emplace(entity);
+	groupPerEntity.emplace(entity.GetID(), group);
+}
+
+bool Registry::EntityBelongsToGroup(Entity entity, const std::string& group)
+{
+	if (entitiesPerGroup.find(group) == entitiesPerGroup.end()) {
+		return false; // Group doesn't exist, so entity can't belong to it
+	}
+	auto groupEntities = entitiesPerGroup.at(group);
+	return groupEntities.find(entity.GetID()) != groupEntities.end();
+}
+
+std::vector<Entity> Registry::GetEntitiesByGroup(const std::string& group)
+{
+	if (entitiesPerGroup.find(group) == entitiesPerGroup.end()) {
+		spdlog::warn("Trying to get entities by group, but group '" + group + "' does not exist.");
+		return std::vector<Entity>(); // Return empty vector
+	}
+	auto& setOfEntities = entitiesPerGroup.at(group);
+	return std::vector<Entity>(setOfEntities.begin(), setOfEntities.end());
+}
+
+void Registry::RemoveEntityGroup(Entity entity) 
+{
+	// if in group, remove entity from group management
+	auto groupedEntity = groupPerEntity.find(entity.GetID());
+	if (groupedEntity != groupPerEntity.end()) {
+		auto group = entitiesPerGroup.find(groupedEntity->second);
+		if (group != entitiesPerGroup.end()) {
+			auto entityInGroup = group->second.find(entity);
+			if (entityInGroup != group->second.end()) {
+				group->second.erase(entityInGroup);
+			}
+		}
+		groupPerEntity.erase(groupedEntity);
+	}
 }

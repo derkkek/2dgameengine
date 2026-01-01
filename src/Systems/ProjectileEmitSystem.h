@@ -58,6 +58,7 @@ public:
                     projectile.AddComponent<SpriteComponent>("bullet-image", 4, 4, 4);
                     projectile.AddComponent<BoxColliderComponent>(4, 4);
                     projectile.AddComponent<ProjectileComponent>(projectileEmitter.isFriendly, projectileEmitter.hitPercentDamage, projectileEmitter.projectileDuration);
+                    projectile.Group("projectiles");
                 }
             }
         }
@@ -89,7 +90,7 @@ public:
                 projectile.AddComponent<SpriteComponent>("bullet-image", 4, 4, 4);
                 projectile.AddComponent<BoxColliderComponent>(4, 4);
                 projectile.AddComponent<ProjectileComponent>(projectileEmitter.isFriendly, projectileEmitter.hitPercentDamage, projectileEmitter.projectileDuration);
-
+                projectile.Group("projectiles");
                 // Update the projectile emitter component last emission to the current milliseconds
                 projectileEmitter.lastEmissionTime = SDL_GetTicks();
             }
